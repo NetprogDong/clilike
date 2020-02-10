@@ -10,7 +10,7 @@ clilike使用pexpect模块，可模拟telnet、ssh等多种设备登陆方式。
 
 该工具需要先设置环境参数，用以适应你的网络环境。该环境参数的设置文件为profile.py，需要设置的参数以python字典的形式存放，字典中每个key代表一类参数，每个key对应的value即为需要设置的参数值，参数值均为字符串。
 
-```
+```python
 env_parameter = {
                   'log_dir' : '/Users/dong/Desktop/clilikelog/',
                   'aaa_user' : 'aaa_username',
@@ -42,14 +42,14 @@ clilike工具需要被操作端的返回信息来做成功执行命令的判断�
 
 ### 举例
 
-* 华三、华为设备，sysname为LEAF1.P1.G1.YF，它的行匹配符为  
+* 华三、华为设备，sysname为LEAF1.P1.G1.YF，那么要匹配的回显行字符串包括但不限于如下  
 ```
-<LEAF1.P1.G1.YF>或
-[LEAF1.P1.G1.YF]或
-[LEAF1.P1.G1.YF-Ten-GigabitEthernet1/0/45]或
-[LEAF1.P1.G1.YF-bgp-default]等等。
+"<LEAF1.P1.G1.YF>"或
+"[LEAF1.P1.G1.YF]"或
+"[LEAF1.P1.G1.YF-Ten-GigabitEthernet1/0/45]"或
+"[LEAF1.P1.G1.YF-bgp-default]"等等。
 ```
-本工具使用正则表达式来做行匹配符，那么只要你的网络设备的sysname满足如下条件，即可直接使用代码中提供的'hostname_format_h3c'对应的value。
+本工具使用正则表达式来做行匹配符，那么只要你的网络设备的sysname满足如下条件，即可直接使用代码中提供的'hostname_format_h3c'对应的value，如果不满足如下条件，需要自行编写行匹配符。  
   - 条件1  
   sysname满足至少有3个'.'字符。  
   例如：LEAF1.P1.G1.YF  
@@ -59,8 +59,96 @@ clilike工具需要被操作端的返回信息来做成功执行命令的判断�
   - 条件3  
   sysname满足至少有3个'\_'字符。  
   例如：LEAF1\_P1\_G1\_YF  
-* 思科设备
+* 思科设备  
 思科有两个行匹配符，也使用正则表达式来匹配行匹配符，区别仅在于最后一位字符是'>'还是'#'。  
-只要你的网络设备的hostname满足如下条件，即可直接使用代码中提供的'hostname_format_cisco1'和'hostname_format_cisco2'对应的value。  
+只要你的网络设备的hostname满足如下条件，即可直接使用代码中提供的'hostname_format_cisco1'和'hostname_format_cisco2'对应的value，如果不满足如下条件，需要自行编写行匹配符。  
+  - 条件1  
+  hostname满足至少有3个'.'字符。  
+  例如：LEAF1.P1.G1.YF  
+  - 条件2  
+  hostname满足至少有3个'-'字符。  
+  例如：LEAF1-P1-G1-YF  
+  - 条件3  
+  hostname满足至少有3个'\_'字符。  
+  例如：LEAF1\_P1\_G1\_YF  
+
+### 方法&功能  
+clilike提供了设备登陆方法以及执行命令方法：  
+* 设备登陆方法  
+提供了h3c、cisco、huawei3种设备的telnet登陆方法。  
+即调用装饰器函数  
+```python
+@devopstools.h3c_login_device(’10.100.100.1‘, 720)
+@devopstools.cisco_login_device(’10.100.100.1‘, 720)
+@devopstools.huawei_login_device(’10.100.100.1‘, 720)
+```
+其中，两个参数  
+1)'10.100.100.1'：数据类型为字符串，即为所要登陆的设备ip。  
+2)720：数据类型为整数，即为该session的超时时间，单位为秒，超时后session中断并返回超时提醒。
+tips:  
+由于登陆方法通过装饰器函数实现，因此登陆后对设备进行的一切执行命令的过程全部放在装饰器函数所要装饰的函数中。见test.py中的show_ip_interf()函数。
+```python
+@devopstools.h3c_login_device(ip, 720)
+    # show_ip_interf函数中定义要执行的命令及反馈结果
+    def show_ip_interf():
+        try:
+            # 登陆设备后，执行命令display ip interface brief
+            output = devopstools.h3c_cli('display ip int brief')
+            print output
+        except Exception:
+            # 如果出错打印出错原因
+            print('Some errors occurred when execute command on %s.' % ip)
+            print(traceback.format_exc())
+    show_ip_interf()
+```
+* 设备执行命令方法  
+提供了h3c、cisco、huawei3种设备执行命令的方法  
+例如：
+```python
+devopstools.h3c_cli('display ip int brief')
+devopstools.cisco_cli(['show ip interface brief', 'show arp'])
+devopstools.huawei_cli(['display ip interface brief', 'display cu'])
+```
+执行的命令即为传入的参数，其中参数为列表的会依次执行列表中的元素，用以实现一次执行多条命令。  
+该方法还会返回执行命令后的设备回显，返回回显信息数据类型为字符串。  
+```python
+output = devopstools.h3c_cli('display ip int brief')
+print output
+```
+
+### 差错控制
+* session超时  
+  - 引起session超时的原因：  
+    1)设备不可达  
+    2)回显始终未匹配到行匹配符  
+  - 差错控制机制  
+    超时后，会在终端打印相关错误信息，并结束该session。
+* 设备拒绝登陆  
+  - 引起拒绝登陆的原因：  
+    1)设备由于安全策略或自身配置导致拒绝登陆  
+    2)用户名或密码错误
+  - 差错控制机制  
+    拒绝登陆出现后，会在终端打印相关错误信息，并结束该session。
+* 执行命令错误  
+执行命令一旦返回报错回显信息，有两种动作，通过执行命令方法的参数strict控制：  
+  - strict = 'True'，默认值  
+  只要出现命令错误提示回显，则立即结束该session，并且在终端打印错误信息。  
+  - strict = 'False'  
+  出现命令错误提示回显后，只在终端打印错误信息，并继续执行程序。
+  ```python
+  output = devopstools.h3c_cli('display ip int brief', strict = True)
+  output = devopstools.cisco_cli(['show ip interface brief', 'show arp'], strict = False)
+  ```
+
+### 异步并行  
+通过multiprocessing模块进行异步并行操作，主体思路就是先定义好登陆设备后的操作设备的函数方法，最后通过异步函数p.apply_async()调用设备操作函数。  
+详见例子代码：test_async.py  
+
+
+### 简易实践  
+详见如下文件：  
+* test.py
+* test_async.py
+
 
   
