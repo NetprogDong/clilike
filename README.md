@@ -49,7 +49,7 @@ clilike工具需要被操作端的返回信息来做成功执行命令的判断�
     "[LEAF1.P1.G1.YF-Ten-GigabitEthernet1/0/45]"或
     "[LEAF1.P1.G1.YF-bgp-default]"等等。  
     ```
-本工具使用正则表达式来做行匹配符，那么只要你的网络设备的sysname满足如下条件，即可直接使用代码中提供的'hostname_format_h3c'对应的value，如果不满足如下条件，需要自行编写行匹配符。  
+  本工具使用正则表达式来做行匹配符，那么只要你的网络设备的sysname满足如下条件，即可直接使用代码中提供的'hostname_format_h3c'对应的value，如果不满足如下条件，需要自行编写行匹配符。  
   - 条件1  
   sysname满足至少有3个'.'字符。  
   例如：LEAF1.P1.G1.YF  
