@@ -42,13 +42,13 @@ clilike工具需要被操作端的返回信息来做成功执行命令的判断�
 
 ### 举例
 
-* 华三、华为设备，sysname为LEAF1.P1.G1.YF，那么要匹配的回显行字符串包括但不限于如下  
-```
-"<LEAF1.P1.G1.YF>"或
-"[LEAF1.P1.G1.YF]"或
-"[LEAF1.P1.G1.YF-Ten-GigabitEthernet1/0/45]"或
-"[LEAF1.P1.G1.YF-bgp-default]"等等。
-```
+* 华三、华为设备，sysname为LEAF1.P1.G1.YF，那么要匹配的回显行字符串包括但不限于如下
+    ```
+    "<LEAF1.P1.G1.YF>"或
+    "[LEAF1.P1.G1.YF]"或
+    "[LEAF1.P1.G1.YF-Ten-GigabitEthernet1/0/45]"或
+    "[LEAF1.P1.G1.YF-bgp-default]"等等。  
+    ```
 本工具使用正则表达式来做行匹配符，那么只要你的网络设备的sysname满足如下条件，即可直接使用代码中提供的'hostname_format_h3c'对应的value，如果不满足如下条件，需要自行编写行匹配符。  
   - 条件1  
   sysname满足至少有3个'.'字符。  
@@ -58,7 +58,7 @@ clilike工具需要被操作端的返回信息来做成功执行命令的判断�
   例如：LEAF1-P1-G1-YF  
   - 条件3  
   sysname满足至少有3个'\_'字符。  
-  例如：LEAF1\_P1\_G1\_YF  
+  例如：LEAF1\_P1\_G1\_YF
 * 思科设备  
 思科有两个行匹配符，也使用正则表达式来匹配行匹配符，区别仅在于最后一位字符是'>'还是'#'。  
 只要你的网络设备的hostname满足如下条件，即可直接使用代码中提供的'hostname_format_cisco1'和'hostname_format_cisco2'对应的value，如果不满足如下条件，需要自行编写行匹配符。  
